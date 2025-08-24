@@ -1,15 +1,11 @@
 import axios from "axios";
-import { createContext, useEffect, useState } from "react";
+import { createContext, useState } from "react";
 
 export let productsContext = createContext();
 
 export function ProductsContextProvider(props) {
 
     const [categories, setCategories] = useState(null)
-
-    let headers = {
-        token: localStorage.getItem('userToken'),
-    }
 
     async function getAllProducts(fields = '') {
         return axios.get(`https://ecommerce.routemisr.com/api/v1/products?${fields}`)

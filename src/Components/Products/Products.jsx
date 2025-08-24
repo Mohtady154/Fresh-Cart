@@ -1,154 +1,167 @@
-import React, { useContext, useEffect, useState } from 'react'
-import styles from './Products.module.css'
-import { Helmet } from 'react-helmet'
-import Loader from '../Loader/Loader.jsx';
-import ProductCard from '../ProductCard/ProductCard.jsx';
-import { useNavigate } from 'react-router-dom';
-import { productsContext } from '../../Context/ProductsContext.js';
-import ResponsivePagination from 'react-responsive-pagination';
-import noProductsImg from '../../assets/NoProducts.svg'
+import { useContext, useState, useMemo } from "react";
+import { Helmet } from "react-helmet-async";
+import { useQuery } from "@tanstack/react-query";
+import Loader from "../Loader/Loader.jsx";
+import ProductCard from "../ProductCard/ProductCard.jsx";
+import { useNavigate } from "react-router-dom";
+import { productsContext } from "../../Context/ProductsContext.js";
+import ResponsivePagination from "react-responsive-pagination";
+import noProductsImg from "../../assets/images/NoProducts.svg";
 
 export default function Products() {
+  const { getAllProducts, categories } = useContext(productsContext);
+  const navigate = useNavigate();
 
-    let { getAllProducts, categories, setCategories } = useContext(productsContext);
-    const [products, setProducts] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [filterOption, setFilterOption] = useState('');
-    const [selectedFilteredOption, setSelectedFilteredOption] = useState('select option');
-    const [categoryOption, setCategoryOption] = useState('');
-    const [selectedCategoryOption, setSelectedCategoryOption] = useState('select option');
-    const sortOptions = {
-        '&sort=': 'select option',
-        '&sort=price': 'Lowest Price',
-        '&sort=-price': 'Highest Price',
-        '&sort=ratingsAverage': 'Lowest Rating',
-        '&sort=-ratingsAverage': 'Highest Rating',
-        '&sort=-sold': 'Best Seller',
-    };
-    const categoryOptions = {
-        'all': 'All',
-    }
+  // Filters and pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filterOption, setFilterOption] = useState("&sort=");
+  const [categoryOption, setCategoryOption] = useState("all");
 
+  // Sort options
+  const sortOptions = useMemo(
+    () => ({
+      "&sort=": "Select option",
+      "&sort=price": "Lowest Price",
+      "&sort=-price": "Highest Price",
+      "&sort=ratingsAverage": "Lowest Rating",
+      "&sort=-ratingsAverage": "Highest Rating",
+      "&sort=-sold": "Best Seller",
+    }),
+    []
+  );
 
-    let navigate = useNavigate();
-    function getOut() {
-        localStorage.removeItem('userToken');
-        navigate('/');
-    }
+  // Category options mapping
+  const categoryOptions = useMemo(
+    () => ({
+      all: "All",
+      ...categories?.reduce((acc, category) => {
+        acc[`&category[in]=${category._id}`] = category.name;
+        return acc;
+      }, {}),
+    }),
+    [categories]
+  );
 
-    async function getProducts(filter = '', category = '') {
-        setIsLoading(true);
-        let res = await getAllProducts(`page=${currentPage}&limit=24${filter}${category}`);
-        if (res?.data?.results > 0) {
-            setProducts(res?.data?.data);
-            setTotalPages(res?.data?.metadata?.numberOfPages);
-        }
-        else {
-            if (res?.response?.data?.message === 'Expired Token. please login again') getOut();
-            else{
-                setProducts(null);
-                setTotalPages(1);
-            }
-        }
-        setIsLoading(false);
-    }
+  // Logout function
+  const handleLogout = () => {
+    localStorage.removeItem("userToken");
+    navigate("/");
+  };
 
-    useEffect(() => {
-        getProducts(filterOption, categoryOption);
-    }, [currentPage]);
+  // Fetch products with React Query (v5 object syntax)
+  const { data, isLoading } = useQuery({
+    queryKey: ["products", currentPage, filterOption, categoryOption],
+    queryFn: () =>
+      getAllProducts(
+        `page=${currentPage}&limit=24${filterOption}${
+          categoryOption === "all" ? "" : categoryOption
+        }`
+      ),
+    keepPreviousData: true,
+    onError: (err) => {
+      if (err?.response?.data?.message === "Expired Token. please login again") {
+        handleLogout();
+      }
+    },
+  });
 
+  const products = data?.data?.data || [];
+  const totalPages = data?.data?.metadata?.numberOfPages || 1;
 
-    function handlePageChange(page) {
-        setCurrentPage(page);
-    }
+  // Handlers
+  const handlePageChange = (page) => setCurrentPage(page);
 
-    function handleSortSelection(e) {
-        setSelectedFilteredOption(sortOptions[e.target.value]);
-        setFilterOption(e.target.value)
-        getProducts(e.target.value, categoryOption)
-    }
+  const handleSortChange = (e) => {
+    setFilterOption(e.target.value);
+    setCurrentPage(1); // reset page on filter change
+  };
 
-    function handleCategorySelection(e) {
-        categories?.forEach(category => {
-            categoryOptions['&category[in]='+category?._id] = category.name;
-        });
-        setSelectedCategoryOption(categoryOptions[e.target.value]);
-        setCategoryOption(e.target.value === 'all' ? '' : e.target.value)
-        getProducts(filterOption, e.target.value === 'all' ? '' : e.target.value)
-    }
+  const handleCategoryChange = (e) => {
+    setCategoryOption(e.target.value);
+    setCurrentPage(1); // reset page on filter change
+  };
 
-    function resetAll(){
-        setSelectedFilteredOption('select option');
-        setFilterOption('')
-        setSelectedCategoryOption('select option')
-        setCategoryOption('');
-        getProducts()
-    }
-    
-    if(currentPage > totalPages) setCurrentPage(1);
+  const resetAllFilters = () => {
+    setFilterOption("&sort=");
+    setCategoryOption("all");
+    setCurrentPage(1);
+  };
 
-    if (isLoading) {
-        return <Loader />
-    }
+  if (isLoading) return <Loader />;
 
-    return <>
-        <Helmet>
-            <title>Products</title>
-        </Helmet>
-        <div className="row py-5">
-            <div className='row d-flex'>
-                <h2 className='col-md-4 fw-simibold' >
-                    <span className='cursor-pointer' onClick={resetAll}>All Products</span>
-                </h2>
-                <div className='col-md-8'>
-                    <div className='row'>
-                        <div className='col-md-6 d-flex align-items-center mb-2'>
-                            <h5 className='my-0 mx-2'>Category</h5>
-                            <div className="dropdown" >
-                                <select className="form-control" onChange={handleCategorySelection} >
-                                    <option value="">{selectedCategoryOption}</option>
-                                    <option value="all">All</option>
-                                    {categories?.map((category) =>
-                                        <option key={category?._id} value={`&category[in]=${category?._id}`} h={category?.name} >{category?.name}</option>
-                                    )}
-                                </select>
-                            </div>
-                        </div>
-                        <div className='col-md-6 d-flex align-items-center mb-2'>
-                            <h5 className='my-0 mx-2'>Sort by</h5>
-                            <div className="dropdown" >
-                                <select className="form-control" onChange={handleSortSelection} >
-                                    <option value="">{selectedFilteredOption}</option>
-                                    <option value="&sort=price">Lowest Price</option>
-                                    <option value="&sort=-price">Highest Price</option>
-                                    <option value="&sort=ratingsAverage">Lowest Rating</option>
-                                    <option value="&sort=-ratingsAverage">Highest Rating</option>
-                                    <option value="&sort=-sold">Best Seller</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  return (
+    <>
+      <Helmet>
+        <title>Products</title>
+      </Helmet>
 
+      <div className="row py-5">
+        {/* Filters Header */}
+        <div className="row d-flex align-items-center mb-3">
+          <h2 className="col-md-4 fw-semibold">
+            <span className="cursor-pointer" onClick={resetAllFilters}>
+              All Products
+            </span>
+          </h2>
+
+          <div className="col-md-8">
+            <div className="row">
+              {/* Category Select */}
+              <div className="col-md-6 d-flex align-items-center mb-2">
+                <h5 className="my-0 mx-2">Category</h5>
+                <select
+                  className="form-control"
+                  value={categoryOption}
+                  onChange={handleCategoryChange}
+                >
+                  {Object.entries(categoryOptions).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Sort Select */}
+              <div className="col-md-6 d-flex align-items-center mb-2">
+                <h5 className="my-0 mx-2">Sort by</h5>
+                <select
+                  className="form-control"
+                  value={filterOption}
+                  onChange={handleSortChange}
+                >
+                  {Object.entries(sortOptions).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-
-            {products?.length>0 ? products?.map((product) => <ProductCard key={product?._id} product={product} />): 
-            <div className='d-flex justify-content-center pt-5 pb-2'>
-                <img className='w-50' src={noProductsImg} alt="" />
-            </div>
-            }
-
-
-            {totalPages > 1? <ResponsivePagination
-                total={totalPages}
-                current={currentPage}
-                onPageChange={page => handlePageChange(page)}
-                maxWidth={''}
-                extraClassName='justify-content-center'
-            />: null}
-            
+          </div>
         </div>
+
+        {/* Products Grid */}
+        {products.length > 0 ? (
+          products.map((product) => (
+            <ProductCard key={product._id} product={product} />
+          ))
+        ) : (
+          <div className="d-flex justify-content-center pt-5 pb-2">
+            <img className="w-50" src={noProductsImg} alt="No Products" />
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <ResponsivePagination
+            total={totalPages}
+            current={currentPage}
+            onPageChange={handlePageChange}
+            extraClassName="justify-content-center"
+          />
+        )}
+      </div>
     </>
+  );
 }

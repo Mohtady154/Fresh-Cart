@@ -1,5 +1,4 @@
 import axios from "axios";
-import jwtDecode from "jwt-decode";
 import { createContext, useState } from "react";
 
 export let authenticationContext = createContext();
