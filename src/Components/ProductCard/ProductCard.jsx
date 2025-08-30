@@ -16,8 +16,8 @@ export default function ProductCard({ product, showSubcategory }) {
   } = useContext(cartContext);
 
   const [isFavorite, setIsFavorite] = useState(false);
-  const [loadingId, setLoadingId] = useState(null); // ✅ تحميل زرار Add to Cart
-  const [wishLoadingId, setWishLoadingId] = useState(null); // ✅ تحميل زرار Heart
+  const [loadingId, setLoadingId] = useState(null); 
+  const [wishLoadingId, setWishLoadingId] = useState(null); 
 
   let navigate = useNavigate();
   function getOut() {
