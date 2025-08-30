@@ -46,18 +46,6 @@ export default function Navbar({ userData, logOut }) {
                 </li>
               </ul>
             ) : null}
-
-            {/* <ul className="navbar-nav mx-auto mt-2 mt-lg-0">
-                        <li className="nav-item d-flex align-items-center">
-                            <i className='fab fa-facebook mx-2'></i>
-                            <i className='fab fa-twitter mx-2'></i>
-                            <i className='fab fa-instagram mx-2'></i>
-                            <i className='fab fa-tiktok mx-2'></i>
-                            <i className='fab fa-linkedin mx-2'></i>
-                            <i className='fab fa-youtube mx-2'></i>
-                        </li>
-                    </ul> */}
-
             <ul className="navbar-nav ms-auto mt-2 mt-lg-0">
               {userData == null ? (
                 <>

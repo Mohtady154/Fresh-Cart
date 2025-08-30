@@ -9,7 +9,7 @@ export default function Brands() {
   let { getBrandDeatails } = useContext(productsContext);
   const [isLoading, setIsLoading] = useState(true);
   const [brand, setBrand] = useState(null);
-  let params = useParams(); // params.id
+  let params = useParams(); 
 
   const getbrand = useCallback(async () => {
     let res = await getBrandDeatails(params.id);

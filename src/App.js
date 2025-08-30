@@ -55,7 +55,8 @@ function App() {
         { path: '*', element: <NotFound /> },
       ]
     },
-  ]);
+  ]
+);
 
   return <>
     <div>
@@ -71,7 +72,7 @@ function App() {
     <AuthenticationContextProvider>
       <ProductsContextProvider>
         <CartContextProvider>
-          <RouterProvider router={router}></RouterProvider>
+          <RouterProvider router={router} future={{ v7_startTransition: true }}></RouterProvider>
         </CartContextProvider>
       </ProductsContextProvider>
     </AuthenticationContextProvider>

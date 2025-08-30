@@ -9,7 +9,7 @@ export default function Categories() {
   let { getCategoryDeatails } = useContext(productsContext);
   const [isLoading, setIsLoading] = useState(true);
   const [category, setCategory] = useState(null);
-  let params = useParams(); // params.id
+  let params = useParams();
 
   useEffect(() => {
     async function getcategory() {

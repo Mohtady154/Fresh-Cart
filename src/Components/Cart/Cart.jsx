@@ -1,3 +1,5 @@
+// src/Components/Cart/Cart.jsx
+
 import { useCallback, useContext, useEffect, useState } from "react";
 import { cartContext } from "../../Context/CartContext.js";
 import toast from "react-hot-toast";
@@ -5,18 +7,27 @@ import { Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Loader from "../Loader/Loader.jsx";
 import emptyCart from "../../assets/images/Empty-cart.svg";
+
 export default function Cart() {
-  let {
+  const {
     getLoggedUserCart,
     removeItemFromCart,
     updateProductCount,
     setNumOfCartItems,
     removeCart,
   } = useContext(cartContext);
+
   const [cartDetails, setCartDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  let navigate = useNavigate();
+  // حالة خاصة لكل زرار أثناء التحميل
+  const [loadingAction, setLoadingAction] = useState({
+    productId: null,
+    type: null,
+  });
+
+  const navigate = useNavigate();
+
   const getOut = useCallback(() => {
     localStorage.removeItem("userToken");
     navigate("/");
@@ -27,7 +38,6 @@ export default function Cart() {
     let res = await getLoggedUserCart();
     if (res?.data?.status === "success") {
       setCartDetails(res.data.data);
-      // console.log(res.data.data);
     } else {
       if (res?.response?.data?.message === "Expired Token. please login again") {
         getOut();
@@ -37,6 +47,7 @@ export default function Cart() {
   }, [getLoggedUserCart, getOut]);
 
   async function deleteItem(productId) {
+    setLoadingAction({ productId, type: "delete" });
     let res = await removeItemFromCart(productId);
     if (res?.data?.status === "success") {
       setCartDetails(res.data.data);
@@ -47,9 +58,11 @@ export default function Cart() {
         ? getOut()
         : toast.error("Failed to remove item");
     }
+    setLoadingAction({ productId: null, type: null });
   }
 
-  async function updateProductQuantity(productId, count) {
+  async function updateProductQuantity(productId, count, type) {
+    setLoadingAction({ productId, type });
     let res = await updateProductCount(productId, count);
     if (res?.data?.status === "success") {
       setCartDetails(res.data.data);
@@ -60,9 +73,11 @@ export default function Cart() {
         ? getOut()
         : toast.error("Failed update quantity");
     }
+    setLoadingAction({ productId: null, type: null });
   }
 
   async function clearCart() {
+    setLoadingAction({ productId: "all", type: "clear" });
     let res = await removeCart();
     if (res?.data?.message === "success") {
       setCartDetails(null);
@@ -73,6 +88,7 @@ export default function Cart() {
         ? getOut()
         : toast.error("Failed Operation");
     }
+    setLoadingAction({ productId: null, type: null });
   }
 
   useEffect(() => {
@@ -131,42 +147,80 @@ export default function Cart() {
                     </Link>
                     <h6 className="text-main">price: {product.price}</h6>
                     <button
-                      onClick={() => {
-                        deleteItem(product.product._id);
-                      }}
+                      onClick={() => deleteItem(product.product._id)}
                       className="btn m-0 p-0"
+                      disabled={
+                        loadingAction.productId === product.product._id &&
+                        loadingAction.type === "delete"
+                      }
                     >
-                      <i className="fa-regular fa-trash-can text-main me-1"></i>
-                      Remove
+                      {loadingAction.productId === product.product._id &&
+                      loadingAction.type === "delete" ? (
+                        <span
+                          className="spinner-border spinner-border-sm text-main"
+                          role="status"
+                        ></span>
+                      ) : (
+                        <>
+                          <i className="fa-regular fa-trash-can text-main me-1"></i>
+                          Remove
+                        </>
+                      )}
                     </button>
                   </div>
                   <div className="col-md-2 d-flex flex-row-reverse">
                     <button
-                      onClick={() => {
+                      onClick={() =>
                         updateProductQuantity(
                           product.product._id,
-                          product.count + 1
-                        );
-                      }}
+                          product.count + 1,
+                          "inc"
+                        )
+                      }
                       className="btn border-main btn-sm"
                       style={{ height: "fit-content" }}
+                      disabled={
+                        loadingAction.productId === product.product._id &&
+                        loadingAction.type === "inc"
+                      }
                     >
-                      +
+                      {loadingAction.productId === product.product._id &&
+                      loadingAction.type === "inc" ? (
+                        <span
+                          className="spinner-border spinner-border-sm"
+                          role="status"
+                        ></span>
+                      ) : (
+                        "+"
+                      )}
                     </button>
                     <span className="mx-3">{product.count}</span>
                     <button
-                      onClick={() => {
+                      onClick={() =>
                         product.count > 1
                           ? updateProductQuantity(
                               product.product._id,
-                              product.count - 1
+                              product.count - 1,
+                              "dec"
                             )
-                          : deleteItem(product.product._id);
-                      }}
+                          : deleteItem(product.product._id)
+                      }
                       className="btn border-main btn-sm"
                       style={{ height: "fit-content" }}
+                      disabled={
+                        loadingAction.productId === product.product._id &&
+                        loadingAction.type === "dec"
+                      }
                     >
-                      -
+                      {loadingAction.productId === product.product._id &&
+                      loadingAction.type === "dec" ? (
+                        <span
+                          className="spinner-border spinner-border-sm"
+                          role="status"
+                        ></span>
+                      ) : (
+                        "-"
+                      )}
                     </button>
                   </div>
                 </div>
@@ -178,20 +232,31 @@ export default function Cart() {
             onClick={clearCart}
             className="btn btn-danger p-2 position-absolute"
             style={{ bottom: "15px", right: "15px" }}
+            disabled={
+              loadingAction.productId === "all" &&
+              loadingAction.type === "clear"
+            }
           >
-            Clear Cart
-            <i className="fa-regular fa-trash-can fa-lg ms-2"></i>
+            {loadingAction.productId === "all" &&
+            loadingAction.type === "clear" ? (
+              <span
+                className="spinner-border spinner-border-sm text-light"
+                role="status"
+              ></span>
+            ) : (
+              <>
+                Clear Cart
+                <i className="fa-regular fa-trash-can fa-lg ms-2"></i>
+              </>
+            )}
           </button>
         </div>
       ) : (
-        <>
-          <div className="row justify-content-center my-5">
-            <div className="col-md-8">
-              <img className="w-100" height={500} src={emptyCart} alt="" />
-              {/* <h5 className='h3 text-main fw-bold text-center my-4 fs-lg'>Cart is empty</h5> */}
-            </div>
+        <div className="row justify-content-center my-5">
+          <div className="col-md-8">
+            <img className="w-100" height={500} src={emptyCart} alt="" />
           </div>
-        </>
+        </div>
       )}
     </>
   );

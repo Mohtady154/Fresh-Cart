@@ -47,12 +47,6 @@ export default function Register() {
       .matches(/^01[0125][0-9]{8}$/, "phone must be valid number"),
   });
 
-  // function validate(values) {
-  //     let errors = {};
-  //     if(values.name.length < 3) errors.name = "more than 3";
-  //     return errors;
-  // }
-
   let formik = useFormik({
     initialValues: {
       name: "",

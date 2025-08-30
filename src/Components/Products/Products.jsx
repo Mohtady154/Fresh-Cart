@@ -48,7 +48,7 @@ export default function Products() {
     navigate("/");
   };
 
-  // Fetch products with React Query (v5 object syntax)
+  // Fetch products with React Query 
   const { data, isLoading } = useQuery({
     queryKey: ["products", currentPage, filterOption, categoryOption],
     queryFn: () =>

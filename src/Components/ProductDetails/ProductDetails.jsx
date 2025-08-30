@@ -71,7 +71,7 @@ export default function ProductDetails() {
     onSuccess: (res) => {
       if (res?.data?.status === "success") {
         toast.success(res.data.message);
-        setNumOfCartItems(res.data.numOfCartItems); // <-- Add this line
+        setNumOfCartItems(res.data.numOfCartItems); 
       }
     },
     onError: (err) => {
@@ -85,13 +85,13 @@ export default function ProductDetails() {
     },
   });
 
-  // Wishlist mutation
+ 
   const wishlistMutation = useMutation({
     mutationFn: (productId) =>
       isFavorite ? removeItemFromWishList(productId) : addToWishList(productId),
     onSuccess: async () => {
       toast.success(isFavorite ? "Item removed" : "Item added");
-      await fetchWishListInfo(); // refresh wishlist
+      await fetchWishListInfo(); 
     },
     onError: (err) => {
       if (

@@ -20,7 +20,7 @@ export default function AllOrders() {
 
   const userId = jwtDecode(localStorage.getItem("userToken"))?.id;
 
-  // ✅ Query: Get Cart Info
+  // Query: Get Cart Info
   useQuery({
     queryKey: ["cart"],
     queryFn: async () => {
@@ -44,7 +44,7 @@ export default function AllOrders() {
     },
   });
 
-  // ✅ Query: Get Orders
+  // Query: Get Orders
   const {
     data: ordersList,
     isLoading,
@@ -62,7 +62,7 @@ export default function AllOrders() {
         return [];
       }
     },
-    enabled: !!userId, // يشتغل بس لو فيه userId
+    enabled: !!userId, 
   });
 
   if (isLoading) return <Loader />;
@@ -80,7 +80,7 @@ export default function AllOrders() {
             <h1>All Orders</h1>
             <div className="accordion" id="accordionExample">
               {ordersList
-                ?.slice() // عشان ما يعدلش على array الأصلي
+                ?.slice() 
                 .reverse()
                 .map((order) => (
                   <div key={order?._id} className="accordion-item">
