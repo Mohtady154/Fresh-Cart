@@ -40,6 +40,8 @@ It is a React JS-powered project that allows users to shop for products in an in
 - JavaScript
 - Bootstrap
 - ReactJs
+- Context
+- React Query
 - react-hot-toast
 - react-helmet
 - react-router-dom
